@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevSuite | Panel de Control</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome para Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* Fondo personalizado oscuro profundo */
+        body {
+            background-color: #0b0d19;
+            color: #e2e8f0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        /* Efecto de tarjeta iluminada con hover */
+        .app-card {
+            background-color: #151a30;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .app-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.2), 0 8px 10px -6px rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- CONTENIDOR PRINCIPAL -->
+    <main class="max-w-6xl mx-auto px-6 py-12 w-full">
+        
+        <!-- ENCABEZADO -->
+        <header class="text-center mb-16">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600/10 border border-blue-500/30 mb-4 shadow-[0_0_20px_rgba(59,130,246,0.15)]">
+                <i class="fa-solid fa-cubes text-blue-500 text-2xl"></i>
+            </div>
+            <h1 class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                DevSuite Personal
+            </h1>
+            <p class="text-slate-400 mt-2 text-lg font-medium">
+                Espacio centralizado de herramientas y espacio de trabajo
+            </p>
+        </header>
+
+        <!-- REJILLA DE APLICACIONES (GRID) -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <!-- Tarjeta 1: Gestor de Tareas -->
+            <a href="apps/gestor-tareas/" class="app-card group block p-6 rounded-2xl border border-slate-800">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                        <i class="fa-solid fa-list-check text-emerald-400 text-xl"></i>
+                    </div>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-slate-600 text-xs group-hover:text-slate-400 transition-colors"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Gestor de Tareas</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    Organización de flujos de trabajo diarios y control de prioridades.
+                </p>
+            </a>
+
+            <!-- Tarjeta 2: Biblioteca de Código -->
+            <a href="apps/biblioteca/" class="app-card group block p-6 rounded-2xl border border-slate-800">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                        <i class="fa-solid fa-code text-blue-400 text-xl"></i>
+                    </div>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-slate-600 text-xs group-hover:text-slate-400 transition-colors"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Snippet Library</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    Fragmentos de código reutilizables y componentes UI listos.
+                </p>
+            </a>
+
+            <!-- Tarjeta 3: Bloc de Notas (Nueva) -->
+            <a href="apps/bloc-notas/" class="app-card group block p-6 rounded-2xl border border-slate-800">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                        <i class="fa-solid fa-note-sticky text-purple-400 text-xl"></i>
+                    </div>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-slate-600 text-xs group-hover:text-slate-400 transition-colors"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Bloc de Notas</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    Apuntes rápidos e información persistente con auto-guardado en tiempo real.
+                </p>
+            </a>
+
+            <!-- Tarjeta 4: Sandbox de IA (Nueva) -->
+            <a href="apps/sandbox-ia/" class="app-card group block p-6 rounded-2xl border border-slate-800">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+                        <i class="fa-solid fa-brain text-amber-400 text-xl"></i>
+                    </div>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-slate-600 text-xs group-hover:text-slate-400 transition-colors"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Asistente & Catálogo</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    Playground UI con asistente integrado de Inteligencia Artificial (Gemini API).
+                </p>
+            </a>
+
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="w-full border-t border-slate-900/60 py-6 text-center text-xs text-slate-500">
+        <div>&copy; 2026 DevSuite. Entorno de uso personal privado.</div>
+    </footer>
+
+</body>
+</html>
