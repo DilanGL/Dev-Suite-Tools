@@ -11,159 +11,164 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
+// Encabezados para que Yahoo Finance no bloquee el backend de Render
+const YAHOO_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+};
+
 /**
- * ESTRUCTURACIÓN DE FINANZAS COMPLETA
- * Satisface la validación estricta del frontend mapeando criptos, divisas e índices
+ * UTILERÍA: Obtener datos reales de Yahoo Finance para Índices y Divisas
+ * Trae precio actual, cambio porcentual e histórico real en un solo viaje
  */
+async function getYahooData(ticker, range = '1d', interval = '15m') {
+    try {
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?range=${range}&interval=${interval}`;
+        const res = await axios.get(url, { headers: YAHOO_HEADERS, timeout: 5000 });
+        
+        const result = res.data.chart.result[0];
+        const meta = result.meta;
+        const prices = result.indicators.quote[0].close.filter(p => p !== null);
+        const timestamps = result.timestamp || [];
+        
+        const currentValue = meta.regularMarketPrice;
+        const previousClose = meta.previousClose || currentValue;
+        const changePercent = ((currentValue - previousClose) / previousClose) * 100;
+
+        return {
+            success: true,
+            currentValue,
+            changePercent: changePercent.toFixed(2) + '%',
+            isUp: changePercent >= 0,
+            prices,
+            timestamps
+        };
+    } catch (error) {
+        console.error(`Error consultando Yahoo Finance para ${ticker}:`, error.message);
+        throw error; // Propagar error para manejo estricto
+    }
+}
+
 /**
  * GET /api/financials
- * Versión ultra-compatible con índices de mercado incluidos
+ * Consulta en tiempo real sin simulaciones
  */
 app.get('/api/financials', async (req, res) => {
     try {
-        const [cryptoRes, forexRes] = await Promise.all([
-            axios.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd', { timeout: 3000 }),
-            axios.get('https://api.frankfurter.app/latest?from=USD&to=EUR,MXN,ARS,COP', { timeout: 3000 })
+        // Consultas en paralelo a fuentes reales
+        const [sp500, nasdaq, dow, btc, eth, sol, eur, mxn, cop] = await Promise.all([
+            getYahooData('^GSPC'), // S&P 500
+            getYahooData('^IXIC'), // NASDAQ
+            getYahooData('^DJI'),  // Dow Jones
+            getYahooData('BTC-USD'),
+            getYahooData('ETH-USD'),
+            getYahooData('SOL-USD'),
+            getYahooData('EURUSD=X'),
+            getYahooData('MXN=X'),
+            getYahooData('COP=X')
         ]);
 
-        // Extracción de datos reales de las APIs de respaldo
-        const btcPrice = cryptoRes.data.bitcoin.usd;
-        const ethPrice = cryptoRes.data.ethereum.usd;
-        const solPrice = cryptoRes.data.solana?.usd || 145.20;
-
-        const eurRate = forexRes.data.rates.EUR;
-        const mxnRate = forexRes.data.rates.MXN;
-        const arsRate = forexRes.data.rates.ARS;
-        const copRate = forexRes.data.rates.COP;
-
-        // La estructura EXACTA que tu App.tsx quiere devorar:
         res.json({
             success: true,
             timestamp: new Date().toISOString(),
-
-            // 1. Array de Índices Bursátiles obligatorios
             indices: [
-                { name: "S&P 500", value: "5,430.50", change: "+0.15%", isUp: true },
-                { name: "NASDAQ", value: "17,680.20", change: "+0.42%", isUp: true },
-                { name: "DOW JONES", value: "38,600.10", change: "-0.08%", isUp: false }
+                { name: "S&P 500", value: sp500.currentValue.toLocaleString('en-US', { minimumFractionDigits: 2 }), change: sp500.changePercent, isUp: sp500.isUp },
+                { name: "NASDAQ", value: nasdaq.currentValue.toLocaleString('en-US', { minimumFractionDigits: 2 }), change: nasdaq.changePercent, isUp: nasdaq.isUp },
+                { name: "DOW JONES", value: dow.currentValue.toLocaleString('en-US', { minimumFractionDigits: 2 }), change: dow.changePercent, isUp: dow.isUp }
             ],
-
-            // 2. Array de Divisas obligatorias (Usadas en tu conversor de monedas)
             currencies: [
-                { name: "EUR / USD", value: eurRate.toFixed(4), change: "-0.12%", isUp: false },
-                { name: "USD / MXN", value: mxnRate.toFixed(4), change: "+0.35%", isUp: true },
-                { name: "USD / ARS", value: arsRate.toFixed(2), change: "+0.05%", isUp: true },
-                { name: "USD / COP", value: copRate.toFixed(2), change: "-0.45%", isUp: false }
+                { name: "EUR / USD", value: eur.currentValue.toFixed(4), change: eur.changePercent, isUp: eur.isUp },
+                { name: "USD / MXN", value: mxn.currentValue.toFixed(4), change: mxn.changePercent, isUp: mxn.isUp },
+                { name: "USD / COP", value: cop.currentValue.toFixed(2), change: cop.changePercent, isUp: cop.isUp }
             ],
-
-            // 3. Array de Criptomonedas obligatorias
             cryptos: [
-                { name: "BTC / USD", value: btcPrice.toLocaleString('en-US'), change: "+1.85%", isUp: true },
-                { name: "ETH / USD", value: ethPrice.toLocaleString('en-US'), change: "+2.10%", isUp: true },
-                { name: "SOL / USD", value: solPrice.toString(), change: "+0.95%", isUp: true }
+                { name: "BTC / USD", value: btc.currentValue.toLocaleString('en-US'), change: btc.changePercent, isUp: btc.isUp },
+                { name: "ETH / USD", value: eth.currentValue.toLocaleString('en-US'), change: eth.changePercent, isUp: eth.isUp },
+                { name: "SOL / USD", value: sol.currentValue.toFixed(2), change: sol.changePercent, isUp: sol.isUp }
             ]
         });
-
     } catch (error) {
-        console.warn('Estructura de respaldo activa enviando esquemas correctos');
-        // Estructura idéntica en el catch por si las APIs externas fallan, para que el Front NO caiga
-        res.json({
-            success: true,
-            indices: [
-                { name: "S&P 500", value: "5,430.50", change: "+0.15%", isUp: true },
-                { name: "NASDAQ", value: "17,680.20", change: "+0.42%", isUp: true },
-                { name: "DOW JONES", value: "38,600.10", change: "-0.08%", isUp: false }
-            ],
-            currencies: [
-                { name: "EUR / USD", value: "1.0820", change: "-0.12%", isUp: false },
-                { name: "USD / MXN", value: "18.2540", change: "+0.35%", isUp: true },
-                { name: "USD / ARS", value: "921.50", change: "+0.05%", isUp: true },
-                { name: "USD / COP", value: "4,085.00", change: "-0.45%", isUp: false }
-            ],
-            cryptos: [
-                { name: "BTC / USD", value: "65,610", change: "+1.85%", isUp: true },
-                { name: "ETH / USD", value: "3,520", change: "+2.10%", isUp: true },
-                { name: "SOL / USD", value: "145.20", change: "+0.95%", isUp: true }
-            ]
-        });
+        // Error real si las APIs fallan (Regla: No inventar datos)
+        res.status(502).json({ success: false, error: "Error real al consultar los proveedores financieros externos." });
     }
 });
 
 /**
- * COMPATIBILIDAD CON YAHOO CHART
- * El frontend espera una estructura específica de cotizaciones históricas
+ * GET /api/chart
+ * Mapea rangos reales basados en lo que tu frontend pide (24H, 7D, 1M)
  */
-app.get('/api/chart', (req, res) => {
-    const ticker = req.query.ticker || 'BTC-USD';
-    const mockPrices = ticker === 'BTC-USD' 
-        ? [66100, 66400, 65900, 66800, 67100, 66900, 67250]
-        : [3480, 3510, 3490, 3530, 3560, 3520, 3540];
+app.get('/api/chart', async (req, res) => {
+    const assetName = req.query.ticker || 'BTC / USD';
+    const timeframe = req.query.range || '7d'; // '24h', '7d', '1m'
 
-    // Recreamos un formato típico de respuesta de gráficos/Yahoo para engañar al validador del front
-    res.json({
-        chart: {
-            result: [{
-                meta: { ticker, currency: "USD" },
-                indicators: { quote: [{ close: mockPrices }] },
-                timestamp: [1717196400, 1717282800, 1717369200, 1717455600, 1717542000, 1717628400, 1717714800]
-            }],
-            error: null
-        },
-        // Propiedades en la raíz por si acaso
-        ticker: ticker,
-        prices: mockPrices,
-        labels: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
-    });
+    // Traducir nombres del front a tickers reales de Yahoo Finance
+    const tickerMap = {
+        'S&P 500': '^GSPC', 'NASDAQ': '^IXIC', 'DOW JONES': '^DJI',
+        'BTC / USD': 'BTC-USD', 'ETH / USD': 'ETH-USD', 'SOL / USD': 'SOL-USD',
+        'EUR / USD': 'EURUSD=X', 'USD / MXN': 'MXN=X', 'USD / COP': 'COP=X'
+    };
+
+    const ticker = tickerMap[assetName] || 'BTC-USD';
+
+    // Mapear intervalos válidos de Yahoo Finance para no sobrecargar datos
+    let range = '7d';
+    let interval = '1h';
+
+    if (timeframe.toUpperCase() === '24H') { range = '1d'; interval = '15m'; }
+    else if (timeframe.toUpperCase() === '7D') { range = '7d'; interval = '1h'; }
+    else if (timeframe.toUpperCase() === '1M') { range = '30d'; interval = '1d'; }
+
+    try {
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?range=${range}&interval=${interval}`;
+        const yahooRes = await axios.get(url, { headers: YAHOO_HEADERS, timeout: 5000 });
+        
+        const result = yahooRes.data.chart.result[0];
+        const prices = result.indicators.quote[0].close.filter(p => p !== null);
+        const timestamps = result.timestamp || [];
+
+        // Generar etiquetas de fecha humanas basadas en datos reales de mercado
+        const labels = timestamps.slice(-prices.length).map(ts => {
+            const date = new Date(ts * 1000);
+            return timeframe.toUpperCase() === '24H' 
+                ? date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+                : date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+        });
+
+        res.json({
+            ticker: assetName,
+            prices: prices,
+            labels: labels,
+            chart: yahooRes.data.chart
+        });
+    } catch (error) {
+        res.status(502).json({ error: "Error al recopilar el histórico real de mercado." });
+    }
 });
 
 /**
- * COMPATIBILIDAD CON PROCESADORES RSS/XML EN EL FRONT
- * Como el front arroja "XML corrupto", significa que espera texto plano XML para parsearlo él mismo.
- * ¡Le daremos exactamente un XML válido generado en caliente!
+ * ENDPOINTS DE NOTICIAS RSS ORIGINALES (Sin alteraciones JSON)
  */
 app.get('/api/news', async (req, res) => {
-    const feedUrl = 'https://feeds.bbci.co.uk/news/technology/rss.xml';
     try {
-        // Obtenemos el XML real directamente de la BBC sin procesarlo en JSON
-        const response = await axios.get(feedUrl, { responseType: 'text', timeout: 4000 });
+        const response = await axios.get('https://feeds.bbci.co.uk/news/technology/rss.xml', { responseType: 'text', timeout: 5000 });
         res.set('Content-Type', 'text/xml');
         res.send(response.data);
     } catch (error) {
-        // Si falla, le mandamos un cascarón XML válido para que el frontend no se rompa al parsear
-        res.set('Content-Type', 'text/xml');
-        res.send(`<?xml version="1.0" encoding="UTF-8" ?>
-        <rss version="2.0">
-        <channel>
-            <title>CleanFeed Backup</title>
-            <link>https://cnbc.com</link>
-            <description>Respaldo de noticias</description>
-            <item>
-                <title>Actualizando los flujos de información en tiempo real...</title>
-                <link>https://cnbc.com</link>
-                <description>Presiona refrescar en unos instantes para sincronizar.</description>
-                <pubDate>${new Date().toUTCString()}</pubDate>
-            </item>
-        </channel>
-        </rss>`);
+        res.status(502).send("Error al consultar el RSS de noticias.");
     }
 });
 
-/**
- * BÚSQUEDA RSS COMPATIBLE CON FORMATO XML
- */
 app.get('/api/news/search', async (req, res) => {
     const query = req.query.q || '';
     try {
         const searchUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=es-419&gl=MX&ceid=MX:es-419`;
-        const response = await axios.get(searchUrl, { responseType: 'text', timeout: 4000 });
+        const response = await axios.get(searchUrl, { responseType: 'text', timeout: 5000 });
         res.set('Content-Type', 'text/xml');
         res.send(response.data);
     } catch (error) {
-        res.set('Content-Type', 'text/xml');
-        res.send(`<?xml version="1.0" encoding="UTF-8" ?><rss version="2.0"><channel><title>Search Backup</title></channel></rss>`);
+        res.status(502).send("Error en la consulta del buscador RSS.");
     }
 });
 
 app.listen(PORT, () => {
-    console.log(`Servidor de ultra-compatibilidad corriendo en puerto ${PORT}`);
+    console.log(`Servidor 100% verídico financiero corriendo en puerto ${PORT}`);
 });
