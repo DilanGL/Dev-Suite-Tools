@@ -43,11 +43,15 @@ async function fetchWithRetry(url, options, retries = 3) {
 async function startServer() {
   const app = (0, import_express.default)();
   
-  // Súmale estas dos líneas aquí para que tu GitHub Pages tenga acceso:
+  async function startServer() {
+  const app = (0, import_express.default)();
+
+  // ACTIVACIÓN DE CORS MUNDIAL PARA TU FRONTEND
   const import_cors = require("cors");
   app.use(import_cors({ origin: '*' }));
-  
-  const PORT = process.env.PORT || 10000; // Render asigna el puerto dinámicamente
+
+  // Puerto dinámico obligatorio para Render
+  const PORT = process.env.PORT || 10000;
   app.get("/api/news", async (req, res) => {
     try {
       const q = req.query.q;
