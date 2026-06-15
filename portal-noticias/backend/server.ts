@@ -21,10 +21,10 @@ async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 3000;
 
-  // Habilitar CORS para que tu frontend en GitHub Pages pueda consultar sin bloqueos
+  // Habilitar CORS para que tu frontend en GitHub Pages lea sin bloqueos de seguridad
   app.use(cors({ origin: '*' }));
 
-  // Ruta raíz para validar rápidamente en el navegador si Render está vivo
+  // Ruta raíz para validar rápidamente en el navegador si Render está activo
   app.get("/", (req, res) => {
     res.send("📡 API de NeutroNews activa, purificada y respondiendo en tiempo real.");
   });
@@ -35,7 +35,7 @@ async function startServer() {
       const q = req.query.q as string;
       const url = q 
         ? `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=es-419&gl=US&ceid=US:es`
-        : \"https://news.google.com/rss?hl=es-419&gl=US&ceid=US:es\";
+        : "https://news.google.com/rss?hl=es-419&gl=US&ceid=US:es";
       
       const response = await fetchWithRetry(url);
       const xml = await response.text();
@@ -72,9 +72,9 @@ async function startServer() {
   // EndPoint: Finanzas Consolidadas (Yahoo + CoinGecko)
   app.get("/api/financials", async (req, res) => {
     try {
-      let indices = [];
-      let currencies = [];
-      let cryptos = [];
+      let indices: any[] = [];
+      let currencies: any[] = [];
+      let cryptos: any[] = [];
 
       // 1. Yahoo Finance (Índices y Divisas)
       try {
@@ -139,9 +139,9 @@ async function startServer() {
       } catch (geckoErr: any) {
         console.warn("[Server API] CoinGecko fetch failed, using fallbacks:", geckoErr.message);
         cryptos = [
-          { name: "BTC / USD", value: "67,250.00", change: "+1.85%\", isUp: true },
-          { name: "ETH / USD", value: "3,520.00", change: "-0.42%\", isUp: false },
-          { name: "SOL / USD", value: "145.50", change: "+4.10%\", isUp: true }
+          { name: "BTC / USD", value: "67,250.00", change: "+1.85%", isUp: true },
+          { name: "ETH / USD", value: "3,520.00", change: "-0.42%", isUp: false },
+          { name: "SOL / USD", value: "145.50", change: "+4.10%", isUp: true }
         ];
       }
 
