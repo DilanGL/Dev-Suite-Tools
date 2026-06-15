@@ -238,10 +238,15 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = import_path.default.join(process.cwd(), "dist");
-    app.use(import_express.default.static(distPath));
+    // Apuntamos directamente a la raíz de portal-noticias subiendo un nivel con '..'
+    const rootPath = import_path.default.join(__dirname, "..");
+    
+    // Servimos los archivos estáticos desde la raíz de portal-noticias
+    app.use(import_express.default.static(rootPath));
+    
+    // Si alguien entra a cualquier ruta no definida, le mandamos el index.html principal
     app.get("*", (req, res) => {
-      res.sendFile(import_path.default.join(distPath, "index.html"));
+      res.sendFile(import_path.default.join(rootPath, "index.html"));
     });
   }
   app.listen(PORT, "0.0.0.0", () => {
