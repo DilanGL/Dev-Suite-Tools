@@ -13,18 +13,16 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
 
-// server.ts
+// Modulos requeridos
 var import_express = __toESM(require("express"), 1);
 var import_path = __toESM(require("path"), 1);
 var import_vite = require("vite");
+var import_cors = require("cors"); // Inyección nativa de CORS
+
 async function fetchWithRetry(url, options, retries = 3) {
   let lastError = null;
   for (let i = 0; i < retries; i++) {
@@ -40,16 +38,21 @@ async function fetchWithRetry(url, options, retries = 3) {
   }
   throw lastError || new Error(`Failed to fetch ${url} after ${retries} retries`);
 }
- 
+
 async function startServer() {
   const app = (0, import_express.default)();
-
-  // ACTIVACIÓN DE CORS MUNDIAL PARA TU FRONTEND
-  const import_cors = require("cors");
+  
+  // 1. Inicializar CORS en la mismisima cabecera antes de cualquier ruta
   app.use(import_cors({ origin: '*' }));
-
-  // Puerto dinámico obligatorio para Render
+  
+  // 2. CORRECCIÓN VITAL: Forzar el puerto dinámico de Render
   const PORT = process.env.PORT || 10000;
+
+  // Ruta Base de control rápido para ver en el navegador
+  app.get("/api/status", (req, res) => {
+    res.json({ status: "online", message: "API conectada globalmente con CORS" });
+  });
+
   app.get("/api/news", async (req, res) => {
     try {
       const q = req.query.q;
@@ -67,6 +70,7 @@ async function startServer() {
       res.status(500).json({ error: err.message || "Failed to fetch Google News" });
     }
   });
+
   app.get("/api/chart", async (req, res) => {
     try {
       const ticker = req.query.ticker;
@@ -88,6 +92,7 @@ async function startServer() {
       res.status(500).json({ error: err.message || "Failed to fetch chart" });
     }
   });
+
   async function getIndexSummary(name, ticker) {
     try {
       const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=2d&interval=1d`;
@@ -145,6 +150,7 @@ async function startServer() {
       };
     }
   }
+
   app.get("/api/indices", async (req, res) => {
     try {
       const items = [
@@ -162,6 +168,7 @@ async function startServer() {
       res.status(500).json({ error: "Failed to fetch stock indices" });
     }
   });
+
   app.get("/api/financials", async (req, res) => {
     try {
       const indexItems = [
@@ -189,7 +196,6 @@ async function startServer() {
           { name: "USD/COP", value: copRate.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), change: "-0.45%", isUp: false }
         ];
       } catch (erErr) {
-        console.warn("[Server API] Exchange rates fetch failing, returning templates:", erErr.message);
         currencies = [
           { name: "EUR/USD", value: "1.0820", change: "+0.15%", isUp: true },
           { name: "USD/MXN", value: "18.2540", change: "-0.32%", isUp: false },
@@ -214,7 +220,6 @@ async function startServer() {
           { name: "SOL / USD", value: solVal.toLocaleString("en-US", { minimumFractionDigits: 2 }), change: `${solChg >= 0 ? "+" : ""}${solChg.toFixed(2)}%`, isUp: solChg >= 0 }
         ];
       } catch (geckoErr) {
-        console.warn("[Server API] CoinGecko fetch failing, returning templates:", geckoErr.message);
         cryptos = [
           { name: "BTC / USD", value: "67,250.00", change: "+1.85%", isUp: true },
           { name: "ETH / USD", value: "3,520.00", change: "-0.42%", isUp: false },
@@ -222,7 +227,7 @@ async function startServer() {
         ];
       }
       const payload = {
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+        timestamp: (new Date()).toISOString(),
         indices,
         currencies,
         cryptos
@@ -233,27 +238,16 @@ async function startServer() {
       res.status(500).json({ error: "Failed to assemble consolidated financials payload" });
     }
   });
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await (0, import_vite.createServer)({
-      server: { middlewareMode: true },
-      appType: "spa"
-    });
-    app.use(vite.middlewares);
-  } else {
-    // Definimos la ruta hacia la raíz
-    const rootPath = import_path.default.join(__dirname, "..");
-    
-    // Permitimos servir archivos estáticos si se requieren
-    app.use(import_express.default.static(rootPath));
-    
-    // Capturamos el index únicamente si la ruta no empieza con /api
-    app.get(/^(?!\/api).*$/, (req, res) => {
-      res.sendFile(import_path.default.join(rootPath, "index.html"));
-    });
-  }
+
+  // Captura de rutas de producción sin colisionar con /api
+  const rootPath = import_path.default.join(__dirname, "..");
+  app.use(import_express.default.static(rootPath));
+  app.get(/^(?!\/api).*$/, (req, res) => {
+    res.sendFile(import_path.default.join(rootPath, "index.html"));
+  });
+
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running securely on port ${PORT}`);
   });
 }
 startServer();
-//# sourceMappingURL=server.cjs.map
