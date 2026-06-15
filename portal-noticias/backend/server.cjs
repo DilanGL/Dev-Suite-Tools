@@ -240,14 +240,14 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    // Apuntamos directamente a la raíz de portal-noticias subiendo un nivel con '..'
+    // Definimos la ruta hacia la raíz
     const rootPath = import_path.default.join(__dirname, "..");
     
-    // Servimos los archivos estáticos desde la raíz de portal-noticias
+    // Permitimos servir archivos estáticos si se requieren
     app.use(import_express.default.static(rootPath));
     
-    // Si alguien entra a cualquier ruta no definida, le mandamos el index.html principal
-    app.get("*", (req, res) => {
+    // Capturamos el index únicamente si la ruta no empieza con /api
+    app.get(/^(?!\/api).*$/, (req, res) => {
       res.sendFile(import_path.default.join(rootPath, "index.html"));
     });
   }
