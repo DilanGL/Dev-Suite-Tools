@@ -40,10 +40,8 @@ async function fetchWithRetry(url, options, retries = 3) {
   }
   throw lastError || new Error(`Failed to fetch ${url} after ${retries} retries`);
 }
+ 
 async function startServer() {
-  const app = (0, import_express.default)();
-  
-  async function startServer() {
   const app = (0, import_express.default)();
 
   // ACTIVACIÓN DE CORS MUNDIAL PARA TU FRONTEND
