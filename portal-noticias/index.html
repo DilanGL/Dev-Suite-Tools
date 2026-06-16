@@ -13,18 +13,37 @@
        ← Volver al Menú
     </a>
 
-    <!-- VENTANA FLOTANTE DE AVISO (ROBUSTA Y ESTILIZADA) -->
-    <div id="cartel-servidor" class="fixed bottom-6 right-6 max-w-sm bg-slate-900/95 border border-amber-500/30 p-4 rounded-xl shadow-2xl backdrop-blur-md z-50 animate-pulse flex gap-3" style="font-family: system-ui, sans-serif; color: #e2e8f0;">
-      <div style="color: #fbbf24; font-size: 1.25rem;">⚠️</div>
-      <div>
-        <h4 style="font-weight: 600; font-size: 0.875rem; margin: 0; color: #f1f5f9;">
-          Conectando Servidor Nube
+    <!-- VENTANA MODAL CENTRADA DE AVISO CON BOTÓN DE CERRAR -->
+    <div id="cartel-servidor" style="position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 9999; font-family: system-ui, sans-serif;">
+      <div style="background-color: #0f172a; border: 1px solid rgba(251, 191, 36, 0.3); padding: 24px; borderRadius: 16px; max-width: 400px; width: 90%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: center; position: relative;">
+        
+        <!-- Icono de Advertencia -->
+        <div style="color: #fbbf24; font-size: 2.5rem; margin-bottom: 12px; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;">⚠️</div>
+        
+        <!-- Título -->
+        <h4 style="font-weight: 600; font-size: 1.125rem; margin: 0 0 8px 0; color: #f1f5f9;">
+          Conectando con el Servidor
         </h4>
-        <p style="font-size: 0.75rem; color: #94a3b8; margin: 5px 0 0 0; line-height: 1.4; font-weight: 300;">
-          La infraestructura gratuita de Render puede demorar entre 30 y 60 segundos en responder en el primer arranque. Agradecemos tu paciencia mientras despierta el backend.
+        
+        <!-- Mensaje -->
+        <p style="font-size: 0.85rem; color: #94a3b8; margin: 0 0 20px 0; line-height: 1.5; font-weight: 300;">
+          La base de datos y los servicios en la nube gratuita de Render pueden tardar entre 30 y 60 segundos en responder en su primer arranque. Agradecemos tu paciencia mientras el sistema se activa.
         </p>
+        
+        <!-- Botón de Cerrar -->
+        <button onclick="document.getElementById('cartel-servidor').style.display='none'" style="background-color: #fbbf24; color: #0f172a; border: none; padding: 8px 24px; font-size: 0.875rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: background-color 0.2s;">
+          Entendido
+        </button>
       </div>
     </div>
+    
+    <!-- Animación CSS simple para el pulso del icono -->
+    <style>
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .5; }
+      }
+    </style>
     
     <div id="root"></div>
   </body>
